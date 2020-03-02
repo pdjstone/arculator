@@ -17,10 +17,13 @@
 #include "wx-app.h"
 #include <wx/xrc/xmlres.h>
 #include <wx/event.h>
+#include <wx/log.h> 
 #endif
 
 #include "wx-config.h"
 #include "wx-config_sel.h"
+
+
 
 extern "C"
 {
@@ -267,15 +270,26 @@ void Frame::OnMenuCommand(wxCommandEvent &event)
         {
                 arc_disc_eject(3);
         }
-        else if (event.GetId() >= XRCID("IDM_DISC_NOISE[0]") && event.GetId() <= XRCID("IDM_DISC_NOISE[4]"))
+        else if (event.GetId() == XRCID("IDM_DISC_NOISE[0]") || event.GetId() == XRCID("IDM_DISC_NOISE[1]") ||
+                 event.GetId() == XRCID("IDM_DISC_NOISE[2]") || event.GetId() == XRCID("IDM_DISC_NOISE[3]") ||
+                 event.GetId() == XRCID("IDM_DISC_NOISE[4]"))
         {
+
+                wxLogDebug("IDM_DISC_NOISE 0-4 %d", event.GetId());
                 wxMenuItem *item = ((wxMenu*)menu)->FindItem(event.GetId());
                 item->Check(true);
 
-                if (event.GetId() == XRCID("IDM_DISC_NOISE[0]"))
+                if (event.GetId() == XRCID("IDM_DISC_NOISE[0]")) {
                         disc_noise_gain = DISC_NOISE_DISABLED;
-                else
-                        disc_noise_gain = -2 * (event.GetId() - XRCID("IDM_DISC_NOISE[1]"));
+                } else if (event.GetId() == XRCID("IDM_DISC_NOISE[1]")) {
+                        disc_noise_gain = 0;
+                } else if (event.GetId() == XRCID("IDM_DISC_NOISE[2]")) {
+                        disc_noise_gain = -2;
+                } else if (event.GetId() == XRCID("IDM_DISC_NOISE[3]")) {
+                        disc_noise_gain = -4;
+                } else if (event.GetId() == XRCID("IDM_DISC_NOISE[4]")) {
+                        disc_noise_gain = -6;
+                } 
         }
         else if (event.GetId() == XRCID("IDM_SOUND_ENABLE"))
         {
