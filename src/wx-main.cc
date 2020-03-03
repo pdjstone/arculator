@@ -9,10 +9,16 @@ extern "C"
         #include "config.h"
         #include "podules.h"
         #include "soundopenal.h"
+#ifdef __LINUX__
+        #include <X11/Xlib.h>
+#endif
 }
 
 int main(int argc, char **argv)
 {
+#ifdef __LINUX__
+        XInitThreads();
+#endif
         al_init_main(0, NULL);
 
         strncpy(exname, argv[0], 511);
