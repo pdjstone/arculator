@@ -117,7 +117,7 @@ typedef struct {
 #define NOT_IMPLEMENTED 255
 
 #define DEFAULT_ATTRIBUTES  0x03
-#define DEFAULT_FILE_TYPE   RISC_OS_FILE_TYPE_TEXT
+#define DEFAULT_FILE_TYPE   RISC_OS_FILE_TYPE_DATA
 #define MINIMUM_BUFFER_SIZE 32768
 
 /** Disc name of default disc or if no disc name is present */
@@ -416,7 +416,8 @@ hostfs_read_object_info(const char *host_pathname,
   bool is_timestamped = true; /* Assume initially it has timestamp/filetype */
   bool truncate_name = false; /* Whether to truncate for leaf
                                  (because filetype or load-exec found) */
-  const char *slash, *comma;
+  const char *slash, *filename_ext;
+  bool is_dot_ext = false;
 
   assert(host_pathname);
   assert(object_info);
@@ -432,32 +433,40 @@ hostfs_read_object_info(const char *host_pathname,
   /* Find where the leafname starts */
   slash = strrchr(host_pathname, '/');
 
-  /* Find whether there is a comma in the leafname */
+ /* Find whether there is a comma in the leafname */
   if (slash) {
     /* Start search for comma after the slash */
-    comma = strrchr(slash + 1, ',');
+    filename_ext = strrchr(slash + 1, ',');
+    if (!filename_ext) {
+      filename_ext = strrchr(slash + 1, '.');
+      if (filename_ext) is_dot_ext = true;
+    }
   } else {
-    comma = strrchr(host_pathname, ',');
+    filename_ext = strrchr(host_pathname, ',');
+    if (!filename_ext) {
+      filename_ext = strrchr(host_pathname, '.');
+      if (filename_ext) is_dot_ext = true;
+    }
   }
 
   /* Search for a filetype or load-exec after a comma */
-  if (comma) {
-    const char *dash = strrchr(comma + 1, '-');
+  if (filename_ext) {
+    const char *dash = strrchr(filename_ext + 1, '-');
 
     /* Determine whether we have filetype or load-exec */
     if (dash) {
       /* Check the lengths of the portions before and after the dash */
-      if ((dash - comma - 1) >= 1 && (dash - comma - 1) <= 8 &&
+      if ((dash - filename_ext - 1) >= 1 && (dash - filename_ext - 1) <= 8 &&
           strlen(dash + 1) >= 1 && strlen(dash + 1) <= 8)
       {
         /* Check there is no whitespace present, as sscanf() silently
            ignores it */
-        const char *whitespace = strpbrk(comma + 1, " \f\n\r\t\v");
+        const char *whitespace = strpbrk(filename_ext + 1, " \f\n\r\t\v");
 
         if (!whitespace) {
           ARMword load, exec;
 
-          if (sscanf(comma + 1, "%8x-%8x", &load, &exec) == 2) {
+          if (sscanf(filename_ext + 1, "%8x-%8x", &load, &exec) == 2) {
             /* Replace timestamp information with load-exec addresses */
             object_info->load = load;
             object_info->exec = exec;
@@ -466,11 +475,13 @@ hostfs_read_object_info(const char *host_pathname,
           }
         }
       }
-    } else if (strlen(comma + 1) == 3) {
-      if (isxdigit(comma[1]) && isxdigit(comma[2]) && isxdigit(comma[3])) {
-        file_type = (ARMword) strtoul(comma + 1, NULL, 16);
+    } else if (strlen(filename_ext + 1) == 3 && !is_dot_ext) {
+      if (isxdigit(filename_ext[1]) && isxdigit(filename_ext[2]) && isxdigit(filename_ext[3])) {
+        file_type = (ARMword) strtoul(filename_ext + 1, NULL, 16);
         truncate_name = true;
       }
+    } else if (is_dot_ext) {
+      truncate_name = true;
     }
   }
 
@@ -489,7 +500,7 @@ hostfs_read_object_info(const char *host_pathname,
     if (truncate_name) {
       /* If a filetype or load-exec was found, we only want the part from after
          the slash to before the comma */
-      ro_leaf_len = comma - slash - 1;
+      ro_leaf_len = filename_ext - slash - 1;
     } else {
       /* Return everything from after the slash to the end */
       ro_leaf_len = strlen(slash + 1);
