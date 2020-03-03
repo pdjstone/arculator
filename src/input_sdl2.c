@@ -47,14 +47,20 @@ void mouse_poll_host()
                 mouse_buttons = 0;
                 if (mb & SDL_BUTTON(SDL_BUTTON_LEFT))
                 {
-                        mouse_buttons |= 1;
+                        SDL_Keymod mod = SDL_GetModState();
+                        if (mod & KMOD_ALT) // simulate middle click
+                                mouse_buttons |= 4;
+                        else
+                                mouse_buttons |= 1;
                 }
                 if (mb & SDL_BUTTON(SDL_BUTTON_RIGHT))
                 {
+                        rpclog("mouse button R\n");
                         mouse_buttons |= 2;
                 }
                 if (mb & SDL_BUTTON(SDL_BUTTON_MIDDLE))
                 {
+                        rpclog("mouse button M\n");
                         mouse_buttons |= 4;
                 }
 
