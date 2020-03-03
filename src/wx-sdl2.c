@@ -119,7 +119,7 @@ static int arc_main_thread(void *p)
                                 }
                         }
                         if ((key[KEY_LCONTROL] || key[KEY_RCONTROL])
-                            && key[KEY_END]
+                            && (key[KEY_END] || key[KEY_INSERT])
                             && !fullscreen && mousecapture)
                         {
                                 rpclog("CTRL-END pressed -- disabling mouse capture\n");
@@ -147,7 +147,7 @@ static int arc_main_thread(void *p)
                 /*Toggle fullscreen with RWIN-Enter (Alt-Enter, Cmd-Enter),
                   or enter by selecting Fullscreen from the menu.*/
                 if (win_dofullscreen ||
-                        (key[KEY_RWIN] && key[KEY_ENTER] && !fullscreen)
+                        ((key[KEY_RWIN] || key[KEY_RCONTROL]) && key[KEY_ENTER] && !fullscreen)
                 )
                 {
                         win_dofullscreen = 0;
@@ -158,7 +158,8 @@ static int arc_main_thread(void *p)
                         fullscreen = 1;
                 } else if (fullscreen && (
                         /*Exit fullscreen with Ctrl-End*/
-                        ((key[KEY_LCONTROL] || key[KEY_RCONTROL]) && key[KEY_END])
+                        ((key[KEY_LCONTROL] || key[KEY_RCONTROL]) && 
+                                (key[KEY_INSERT] || key[KEY_END]))
                         /*Toggle with RWIN-Enter*/
                         || (key[KEY_RWIN] && key[KEY_ENTER])
                 ))
