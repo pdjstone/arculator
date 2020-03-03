@@ -19,3 +19,6 @@ autom4te.cache
 Makefile
 libtool
 arculator
+.Po
+.Plo
+.deps/
